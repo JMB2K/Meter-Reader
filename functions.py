@@ -1,6 +1,6 @@
 #!python34
 
-import os.path, requests, html5lib
+import requests, html5lib
 from bs4 import BeautifulSoup as bs
 
 
@@ -35,7 +35,7 @@ def canon(url, copier, specific_meters):
         counters = s.get(url + '/rps/dcounter.cgi', params=params)
         soup = bs(counters.content, 'html5lib')
         table = soup.table
-        script = table.find_all('script')    
+        script = table.find_all('script')
     elif copier[:9] in no_argos:
         params={'deptid': '8888', 'loginType': 'admin', 'password': '', 'uri': '/', 'user_type_generic': ''}
         s.get(url, params=params)
@@ -67,7 +67,7 @@ def canon(url, copier, specific_meters):
     for tag in script:  # Everything here and below is just parsing out the data from html/java
       tag = tag.text
       if 'write_value' in tag:
-        meter.append(tag)    
+        meter.append(tag)
     count=0
     for i in meter:
         a=i.index('(')
