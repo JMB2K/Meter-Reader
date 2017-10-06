@@ -33,7 +33,7 @@ def canon(url, copier, specific_meters):
     s=requests.Session()
     meter = []
     meters = []
-    pins = ['DAL-MFP-K', 'NYC-MFP-B', 'DAL-MFP-H']. # argos onboard installed but uses pin instead of password in html
+    pins = ['DAL-MFP-K', 'NYC-MFP-B', 'DAL-MFP-H'] # argos onboard installed but uses pin instead of password in html
     no_argos = ['DAL-MFP-J', 'DAL-MFP-M', 'LAX-JOBSI']  # no argos installed, uses the canon UI
 
     if copier[:9] in pins:
