@@ -3,12 +3,6 @@
 import requests, html5lib
 from bs4 import BeautifulSoup as bs
 
-
-#first_link = "/sysmonitor"
-#second_link = "/rps/jstatpri.cgi"
-#third_link = "/rps/dcounter.cgi"
-
-
 def separator(city):
     with open('C:\\Users\\00015\\Desktop\\meter_readings.txt', 'a') as file:
         if len(city) % 2 == 0:
@@ -76,7 +70,7 @@ def canon(url, copier, specific_meters):
     for i in range(len(meters)):
       a=[meters[count][1:4], meters[count][5:-1]]
       meters[count]=a
-      count+1
+      count+=1
     with open('C:\\Users\\00015\\Desktop\\meter_readings.txt', 'a') as f:  # writing meters to file
       f.write('\n' + copier + '\n')
       for i in meters:
