@@ -4,11 +4,6 @@ import requests, html5lib
 from bs4 import BeautifulSoup as bs
 
 
-#first_link = "/sysmonitor"
-#second_link = "/rps/jstatpri.cgi"
-#third_link = "/rps/dcounter.cgi"
-
-
 def separator(city):
     with open('C:\\Users\\00015\\Desktop\\meter_readings.txt', 'a') as file:
         if len(city) % 2 == 0:
@@ -24,27 +19,18 @@ def parse_it(s, url, params): # navigates to and collects the meter data
     s.get(url + 'sysmonitor', params=params)
     s.get(url + '/rps/jstatpri.cgi', params=params)
     counters = s.get(url + '/rps/dcounter.cgi', params=params)
-    soup = bs(counters.conent, 'html5lib')  # parsing from full page to just the meters
+    soup = bs(counters.content, 'html5lib')  # parsing from full page to just the meters
     table = soup.table
     script = table.find_all('script')
     return script
 
 def canon(url, copier, specific_meters):
     s=requests.Session()
-    meter = []
     meters = []
     pins = ['DAL-MFP-K', 'NYC-MFP-B', 'DAL-MFP-H'] # argos onboard installed but uses pin instead of password in html
     no_argos = ['DAL-MFP-J', 'DAL-MFP-M', 'LAX-JOBSI']  # no argos installed, uses the canon UI
 
-    if copier[:9] in pins:
-        params={'pin': '00015', 'originally-requested-url': '/rps/'}
-        script = parse_it(s, url, params)
-
-    elif copier[:9] in no_argos:
-        params={'deptid': '8888', 'loginType': 'admin', 'password': '', 'uri': '/', 'user_type_generic': ''}
-        script = parse_it(s, url, params)
-
-    elif 'PHX-MFP-B' in copier:
+    if 'PHX-MFP-B' in copier:
         params = {'password': '00015', 'uri': '/rps/'}
         s.get(url, params=params)
         s.get(url + '/rps/dstatus.cgi', params=params)  # have to go through all of these url for it to work
@@ -53,35 +39,31 @@ def canon(url, copier, specific_meters):
         table = soup.findAll('table')
         table=table[2]
         script = table.find_all('script')
+
     else:
-        params={'password': '00015', 'uri': '/rps/'}
+        if copier[:9] in pins:
+            params={'pin': '00015', 'originally-requested-url': '/rps/'}
+        elif copier[:9] in no_argos:
+            params={'deptid': '8888', 'loginType': 'admin', 'password': '', 'uri': '/', 'user_type_generic': ''}
+        else:
+            params={'password': '00015', 'uri': '/rps/'}
         script = parse_it(s, url, params)
 
-    for tag in script:  # Everything here and below is just parsing out the data from html/java
-      tag = tag.text
-      if 'write_value' in tag:
-        meter.append(tag)
-    count=0
-    for i in meter:
-        a=i.index('(')
-        b=i.index(')')
-        i=i[a:b+1]
-        meter[count]=i
-        count+=1
-    for i in meter:
-      if i[2:5] in '105109124125108':
-        i=i.replace('"', '')
-        meters.append(i)
-    count=0
-    for i in range(len(meters)):
-      a=[meters[count][1:4], meters[count][5:-1]]
-      meters[count]=a
-      count+1
+    for item in script:  #  getting rid of all the bs and down to meter data only
+        item=item.text
+        if 'write_value' in item:
+            a=item.index('(')
+            b=item.index(')') + 1
+            item = item[a:b].replace('"', '')
+            if item[1:4] in '109105124125108':
+                a=item[1:4]
+                b=item[5:-1]
+                meters.append([a, b])
     with open('C:\\Users\\00015\\Desktop\\meter_readings.txt', 'a') as f:  # writing meters to file
-      f.write('\n' + copier + '\n')
-      for i in meters:
-        if i[0] in specific_meters:
-          f.write(i[0] + ': ' + i[1] + '\n')
+        f.write('\n' + copier + '\n')
+        for i in meters:
+            if i[0] in specific_meters:
+            f.write(i[0] + ': ' + i[1] + '\n')
 
 def xerox(url, copier):
     r = requests.get(url)  # get info and make soup
