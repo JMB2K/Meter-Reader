@@ -1,6 +1,6 @@
 #!python34
 
-import requests, html5lib
+import requests, html5lib, timing
 from bs4 import BeautifulSoup as bs
 
 
@@ -16,7 +16,7 @@ def separator(city):
 
 def parse_it(s, url, params): # navigates to and collects the meter data
     s.get(url + '/login', params=params)
-    s.get(url + 'sysmonitor', params=params)
+    s.get(url + '/sysmonitor', params=params)
     s.get(url + '/rps/jstatpri.cgi', params=params)
     counters = s.get(url + '/rps/dcounter.cgi', params=params)
     soup = bs(counters.content, 'html5lib')  # parsing from full page to just the meters
@@ -59,11 +59,12 @@ def canon(url, copier, specific_meters):
                 a=item[1:4]
                 b=item[5:-1]
                 meters.append([a, b])
+
     with open('C:\\Users\\00015\\Desktop\\meter_readings.txt', 'a') as f:  # writing meters to file
         f.write('\n' + copier + '\n')
         for i in meters:
             if i[0] in specific_meters:
-            f.write(i[0] + ': ' + i[1] + '\n')
+                f.write(i[0] + ': ' + i[1] + '\n')
 
 def xerox(url, copier):
     r = requests.get(url)  # get info and make soup
