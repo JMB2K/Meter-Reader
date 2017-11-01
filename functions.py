@@ -1,6 +1,6 @@
 #!python34
 
-import requests, html5lib, timing
+import requests, timing
 from bs4 import BeautifulSoup as bs
 
 
