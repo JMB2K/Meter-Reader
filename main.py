@@ -1,7 +1,8 @@
 from functions import *
 from printers import *
+import time
 
-
+start = time.time()
 separator('DALLAS')
 print("Getting MFP-A meters...")
 canon(dal_mfp_a, 'DAL-MFP-A ---> 55258', '125108')
@@ -57,10 +58,6 @@ separator('Los Angeles')
 print("Getting MFP-A meters...")
 canon(lax_mfp_a, 'LAX-MFP-A', '124109')
 
-print("Getting MFP-JOBSITE meters...")
-canon(lax_jsite, 'LAX-JOBSITE', '125108')
-print("Done with LA....heading to NYC!")
-
 separator('New York City')
 print("Getting MFP-A meters...")
 canon(nyc_mfp_a, 'NYC-MFP-A', '105108')
@@ -76,4 +73,7 @@ canon(phx_mfp_a, 'PHX-MFP-A', '124109')
 print("Getting MFP-B meters...")
 canon(phx_mfp_b, 'PHX-MFP-B', '125108')
 print("All DONE!!")
+
+runtime = time.time() - start
+print("Finished in {:.2f} seconds.".format(runtime))
 input("Press enter to finish...")

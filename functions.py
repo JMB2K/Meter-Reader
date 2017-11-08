@@ -1,6 +1,6 @@
 #!python34
 
-import requests, timing
+import requests
 from bs4 import BeautifulSoup as bs
 
 
