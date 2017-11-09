@@ -42,21 +42,22 @@ canon(dal_mfp_m, 'DAL-MFP-M ---> 39631', '125108')
 
 print("Getting MFP-T meters...")
 xerox(dal_mfp_t, 'DAL-MFP-T ---> 23579')
-print("Done with Dallas....heading to Frisco!")
+print("Done with Dallas....")
 
 separator('FRISCO')
 print("Getting MFP-A meters...")
 canon(fri_mfp_a, 'FRI-MFP-A', '125108')
-print("Done with Frisco....heading to Houston!")
+print("Done with Frisco....")
 
 separator('HOUSTON')
 print("Getting MFP-A meters...")
 canon(hou_mfp_a, 'HOU-MFP-A', '125108')
-print("Done with Houston....heading to LA!")
+print("Done with Houston....")
 
 separator('Los Angeles')
 print("Getting MFP-A meters...")
 canon(lax_mfp_a, 'LAX-MFP-A', '124109')
+print("Done with Los Angeles....")
 
 separator('New York City')
 print("Getting MFP-A meters...")
@@ -64,7 +65,7 @@ canon(nyc_mfp_a, 'NYC-MFP-A', '105108')
 
 print("Getting MFP-B meters...")
 canon(nyc_mfp_b, 'NYC-MFP-B', '105108')
-print("Done with NYC....heading to Phoenix!")
+print("Done with NYC....")
 
 separator('PHOENIX')
 print("Getting MFP-A meters...")
