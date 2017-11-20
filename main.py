@@ -6,16 +6,6 @@ from printers import printer_dict
 import time
 
 
-def separator(city):
-    with open('C:\\Users\\00015\\Desktop\\meter_readings.txt', 'a') as file:
-        if len(city) % 2 == 0:
-            stars = int((18 - len(city))/2)
-            file.write('\n\n' + '*' * 18 + '\n' + '*' * stars + city + '*' * stars + '\n' + '*' * 18 + '\n')
-        else:
-            stars = int((17 - len(city))/2)
-            file.write('\n\n' + '*' * 17 + '\n' + '*' * stars + city + '*' * stars + '\n' + '*' * 17 + '\n')
-    file.close()
-
 def parse_it(s, url, params): # navigates to and collects the meter data
     s.get(url + '/login', params=params)
     s.get(url + '/sysmonitor', params=params)
