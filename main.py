@@ -1,80 +1,106 @@
-from functions import *
-from printers import *
+#!python34
+
+import requests
+from bs4 import BeautifulSoup as bs
+from printers import printer_dict
 import time
 
-start = time.time()
-separator('DALLAS')
-print("Getting MFP-A meters...")
-canon(dal_mfp_a, 'DAL-MFP-A ---> 55258', '125108')
 
-print("Getting MFP-B meters...")
-canon(dal_mfp_b, 'DAL-MFP-B ---> 71156', '125108')
+def separator(city):
+    with open('C:\\Users\\00015\\Desktop\\meter_readings.txt', 'a') as file:
+        if len(city) % 2 == 0:
+            stars = int((18 - len(city))/2)
+            file.write('\n\n' + '*' * 18 + '\n' + '*' * stars + city + '*' * stars + '\n' + '*' * 18 + '\n')
+        else:
+            stars = int((17 - len(city))/2)
+            file.write('\n\n' + '*' * 17 + '\n' + '*' * stars + city + '*' * stars + '\n' + '*' * 17 + '\n')
+    file.close()
 
-print("Getting MFP-C meters...")
-canon(dal_mfp_c, 'DAL-MFP-C ---> 55021', '125108')
+def parse_it(s, url, params): # navigates to and collects the meter data
+    s.get(url + '/login', params=params)
+    s.get(url + '/sysmonitor', params=params)
+    s.get(url + '/rps/jstatpri.cgi', params=params)
+    counters = s.get(url + '/rps/dcounter.cgi', params=params)
+    soup = bs(counters.content, 'html5lib')  # parsing from full page to just the meters
+    table = soup.table
+    script = table.find_all('script')
+    return script
 
-print("Getting MFP-D meters...")
-canon(dal_mfp_d, 'DAL-MFP-D ---> 55259', '125108')
+def canon(copier):
+    s=requests.Session()
+    meters = []
+    url = copier['url']
+    params = copier['params']
+    specific_meters = copier['specific_meters']
+    label = copier['label']
 
-print("Getting MFP-E meters...")
-xerox(dal_mfp_e, 'DAL-MFP-E ---> 43644')
 
-print("Getting MFP-F meters...")
-canon(dal_mfp_f, 'DAL-MFP-F ---> 55260', '125108')
+    if copier == printer_dict['PHX-MFP-B']:
+        s.get(url, params=params)
+        s.get(url + '/rps/dstatus.cgi', params=params)  # have to go through all of these url for it to work
+        counters = s.get(url + '/rps/dcounter.cgi', params=params)
+        soup = bs(counters.content, 'html5lib')
+        table = soup.findAll('table')
+        table=table[2]
+        script = table.find_all('script')
 
-print("Getting MFP-G meters...")
-canon(dal_mfp_g, 'DAL-MFP-G ---> 55215', '125108')
+    else:
+        script = parse_it(s, url, params)
 
-print("Getting MFP-H meters...")
-canon(dal_mfp_h, 'DAL-MFP-H ---> 55261', '125108')
+    for item in script:  #  getting rid of all the bs and down to meter data only
+        item=item.text
+        if 'write_value' in item:
+            a=item.index('(')
+            b=item.index(')') + 1
+            item = item[a:b].replace('"', '')
+            if item[1:4] in '109105124125108':
+                a=item[1:4]
+                b=item[5:-1]
+                meters.append([a, b])
 
-print("Getting MFP-I meters...")
-canon(dal_mfp_i, 'DAL-MFP-I ---> 55262', '108')
+    with open('C:\\Users\\00015\\Desktop\\meter_readings.txt', 'a') as f:  # writing meters to file
+        f.write('\n' + label + '\n')
+        for i in meters:
+            if i[0] in specific_meters:
+                f.write(i[0] + ': ' + i[1] + '\n')
+        f.close()
 
-print("Getting MFP-J meters...")
-canon(dal_mfp_j, 'DAL-MFP-J ---> 39632', '125108')
+def xerox(copier):
+    url = copier['url']
+    label = copier['label']
+    r = requests.get(url)  # get info and make soup
+    soup = bs(r.text, 'html5lib')
+    script = soup.find_all('script')      # parse the meter readings from java
+    my_script = script[0].text
+    binfo = my_script.split('var billInfo = ')
+    binfo2 = str(binfo[1]).rsplit(';')      # parse the meter readings from java
+    result = binfo2[0].replace('[', '').replace(']', '').replace(';', '').replace('\'', '').strip().split(',')
+    if copier == printer_dict['DAL-MFP-T']:  # organizing the data so it writes to file how I want it to
+        a = result[:2]
+        b = result[2:4]
+        c = result[6:8]
+        d = result[8:]
+    else:
+        a = result[:2]
+        b = result[3:5]
+        c = result[9:11]
+        d = result[12:14]
+    results = [a, b, c, d]
+    with open('C:\\Users\\00015\\Desktop\\meter_readings.txt', 'a') as file:  # writing data to file
+        file.write('\n' + label + '\n')
+        for item in results:
+            file.write(str(item[0]) + ': ' + str(item[1]) + '\n')
+        file.close()
 
-print("Getting MFP-K meters...")
-canon(dal_mfp_k, 'DAL-MFP-K ---> 55253', '125108')
 
-print("Getting MFP-M meters...")
-canon(dal_mfp_m, 'DAL-MFP-M ---> 39631', '125108')
+if __name__ == '__main__':
+    start = time.time()
+    for item in printer_dict:
+        if printer_dict[item]['brand'] == 'canon':
+            canon(printer_dict[item])
+        elif printer_dict[item]['brand'] == 'xerox':
+            xerox(printer_dict[item])
+        print('Finished with {}'.format(item))
+    end = time.time() - start
 
-print("Getting MFP-T meters...")
-xerox(dal_mfp_t, 'DAL-MFP-T ---> 23579')
-print("Done with Dallas....")
-
-separator('FRISCO')
-print("Getting MFP-A meters...")
-canon(fri_mfp_a, 'FRI-MFP-A', '125108')
-print("Done with Frisco....")
-
-separator('HOUSTON')
-print("Getting MFP-A meters...")
-canon(hou_mfp_a, 'HOU-MFP-A', '125108')
-print("Done with Houston....")
-
-separator('Los Angeles')
-print("Getting MFP-A meters...")
-canon(lax_mfp_a, 'LAX-MFP-A', '124109')
-print("Done with Los Angeles....")
-
-separator('New York City')
-print("Getting MFP-A meters...")
-canon(nyc_mfp_a, 'NYC-MFP-A', '105108')
-
-print("Getting MFP-B meters...")
-canon(nyc_mfp_b, 'NYC-MFP-B', '105108')
-print("Done with NYC....")
-
-separator('PHOENIX')
-print("Getting MFP-A meters...")
-canon(phx_mfp_a, 'PHX-MFP-A', '124109')
-
-print("Getting MFP-B meters...")
-canon(phx_mfp_b, 'PHX-MFP-B', '125108')
-print("All DONE!!")
-
-runtime = time.time() - start
-print("Finished in {:.2f} seconds.".format(runtime))
-input("Press enter to finish...")
+    print('Completed in {} minutes and {} seconds'.format(int(end//60), int(end%60)))
