@@ -4,21 +4,25 @@ import requests
 from bs4 import BeautifulSoup as bs
 from printers import printer_dict
 import time
+import re
 
 
 def parse_it(s, url, params): # navigates to and collects the meter data
+    meters = []
     s.get(url + '/login', params=params)
     s.get(url + '/sysmonitor', params=params)
     s.get(url + '/rps/jstatpri.cgi', params=params)
     counters = s.get(url + '/rps/dcounter.cgi', params=params)
     soup = bs(counters.content, 'html5lib')  # parsing from full page to just the meters
-    table = soup.table
-    script = table.find_all('script')
-    return script
+    reads = re.findall('write_value\((\"[0-9]+\",[0-9]+)', str(soup))
+    for i in reads:
+        i=i.replace('"', '').split(',')
+        if i[0] in '109124105125108':
+            meters.append(i)
+    return meters
 
 def canon(copier):
     s=requests.Session()
-    meters = []
     url = copier['url']
     params = copier['params']
     specific_meters = copier['specific_meters']
@@ -26,27 +30,20 @@ def canon(copier):
 
 
     if copier == printer_dict['PHX-MFP-B']:
+        meters = []
         s.get(url, params=params)
         s.get(url + '/rps/dstatus.cgi', params=params)  # have to go through all of these url for it to work
         counters = s.get(url + '/rps/dcounter.cgi', params=params)
         soup = bs(counters.content, 'html5lib')
-        table = soup.findAll('table')
-        table=table[2]
-        script = table.find_all('script')
+        reads = re.findall('write_value\((\"[0-9]+\",[0-9]+)', str(soup))
+        for i in reads:
+            i=i.replace('"', '').split(',')
+            if i[0] in '109124105125108':
+                meters.append(i)
 
     else:
-        script = parse_it(s, url, params)
+         meters = parse_it(s, url, params)
 
-    for item in script:  #  getting rid of all the bs and down to meter data only
-        item=item.text
-        if 'write_value' in item:
-            a=item.index('(')
-            b=item.index(')') + 1
-            item = item[a:b].replace('"', '')
-            if item[1:4] in '109105124125108':
-                a=item[1:4]
-                b=item[5:-1]
-                meters.append([a, b])
 
     with open('C:\\Users\\00015\\Desktop\\meter_readings.txt', 'a') as f:  # writing meters to file
         f.write('\n' + label + '\n')
@@ -56,30 +53,27 @@ def canon(copier):
         f.close()
 
 def xerox(copier):
+    global soup, meter_s, results
     url = copier['url']
     label = copier['label']
     r = requests.get(url)  # get info and make soup
     soup = bs(r.text, 'html5lib')
-    script = soup.find_all('script')      # parse the meter readings from java
-    my_script = script[0].text
-    binfo = my_script.split('var billInfo = ')
-    binfo2 = str(binfo[1]).rsplit(';')      # parse the meter readings from java
-    result = binfo2[0].replace('[', '').replace(']', '').replace(';', '').replace('\'', '').strip().split(',')
-    if copier == printer_dict['DAL-MFP-T']:  # organizing the data so it writes to file how I want it to
-        a = result[:2]
-        b = result[2:4]
-        c = result[6:8]
-        d = result[8:]
-    else:
-        a = result[:2]
-        b = result[3:5]
-        c = result[9:11]
-        d = result[12:14]
-    results = [a, b, c, d]
+    meter_s = re.findall('billInfo = \[(.+)\]', str(soup))
+    meter_s = meter_s[0].split(',')
+    results = []
+    while len(meter_s) > 0:
+        temp = []
+        if copier == printer_dict['DAL-MFP-E']:
+            meter_s.pop()
+        temp.append(meter_s.pop().replace('\'', ''))
+        temp.append(meter_s.pop().replace('\'', ''))
+        results.append(temp[::-1])
+
     with open('C:\\Users\\00015\\Desktop\\meter_readings.txt', 'a') as file:  # writing data to file
         file.write('\n' + label + '\n')
         for item in results:
-            file.write(str(item[0]) + ': ' + str(item[1]) + '\n')
+            if 'Total Impressions' not in item[0]:
+                file.write(item[0] + ': ' + item[1] + '\n')
         file.close()
 
 
@@ -87,7 +81,13 @@ if __name__ == '__main__':
     start = time.time()
     for item in printer_dict:
         if printer_dict[item]['brand'] == 'canon':
-            canon(printer_dict[item])
+            try:
+                canon(printer_dict[item])
+            except:
+                with open('C:\\Users\\00015\\Desktop\\meter_readings.txt', 'a') as f:  # writing meters to file
+                    f.write('\n' + printer_dict[item]['label'] + '\n')
+                    f.write('ERROR: NO METERS TAKEN\n')
+                    f.close()
         elif printer_dict[item]['brand'] == 'xerox':
             xerox(printer_dict[item])
         print('Finished with {}'.format(item))
