@@ -53,7 +53,6 @@ def canon(copier):
         f.close()
 
 def xerox(copier):
-    global soup, meter_s, results
     url = copier['url']
     label = copier['label']
     r = requests.get(url)  # get info and make soup
