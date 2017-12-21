@@ -82,7 +82,7 @@ if __name__ == '__main__':
         if printer_dict[item]['brand'] == 'canon':
             try:
                 canon(printer_dict[item])
-            except:
+            except Exception:
                 with open('C:\\Users\\00015\\Desktop\\meter_readings.txt', 'a') as f:  # writing meters to file
                     f.write('\n' + printer_dict[item]['label'] + '\n')
                     f.write('ERROR: NO METERS TAKEN\n')
