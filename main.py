@@ -40,10 +40,8 @@ def canon(copier):
             i=i.replace('"', '').split(',')
             if i[0] in '109124105125108':
                 meters.append(i)
-
     else:
          meters = parse_it(s, url, params)
-
 
     with open('C:\\Users\\00015\\Desktop\\meter_readings.txt', 'a') as f:  # writing meters to file
         f.write('\n' + label + '\n')
