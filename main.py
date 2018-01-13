@@ -5,7 +5,7 @@ from bs4 import BeautifulSoup as bs
 from printers import printer_dict
 import time
 import re
-
+import lxml
 
 def parse_it(s, url, params): # navigates to and collects the meter data
     meters = []
@@ -13,8 +13,8 @@ def parse_it(s, url, params): # navigates to and collects the meter data
     s.get(url + '/sysmonitor', params=params)
     s.get(url + '/rps/jstatpri.cgi', params=params)
     counters = s.get(url + '/rps/dcounter.cgi', params=params)
-    soup = bs(counters.content, 'html5lib')  # parsing from full page to just the meters
-    reads = re.findall('write_value\((\"[0-9]+\",[0-9]+)', str(soup))
+    soup = bs(counters.text, 'lxml')  # parsing from full page to just the meters
+    reads = re.findall('write_value\((\"[0-9]+\",[0-9]+)', soup)
     for i in reads:
         i=i.replace('"', '').split(',')
         if i[0] in '109124105125108':
@@ -34,8 +34,8 @@ def canon(copier):
         s.get(url, params=params)
         s.get(url + '/rps/dstatus.cgi', params=params)  # have to go through all of these url for it to work
         counters = s.get(url + '/rps/dcounter.cgi', params=params)
-        soup = bs(counters.content, 'html5lib')
-        reads = re.findall('write_value\((\"[0-9]+\",[0-9]+)', str(soup))
+        soup = bs(counters.text, 'lxml')
+        reads = re.findall('write_value\((\"[0-9]+\",[0-9]+)', soup)
         for i in reads:
             i=i.replace('"', '').split(',')
             if i[0] in '109124105125108':
@@ -54,8 +54,8 @@ def xerox(copier):
     url = copier['url']
     label = copier['label']
     r = requests.get(url)  # get info and make soup
-    soup = bs(r.text, 'html5lib')
-    meter_s = re.findall('billInfo = \[(.+)\]', str(soup))
+    soup = bs(r.text, 'lxml')
+    meter_s = re.findall('billInfo = \[(.+)\]', soup)
     meter_s = meter_s[0].split(',')
     results = []
     while len(meter_s) > 0:
