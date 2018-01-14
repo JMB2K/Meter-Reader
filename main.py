@@ -1,20 +1,16 @@
 #!python3
 
-import requests
-from bs4 import BeautifulSoup as bs
+import requests, time, re
 from printers import printer_dict
-import time
-import re
-import lxml
 
-def parse_it(s, url, params): # navigates to and collects the meter data
+def parse_it(s, copier): # navigates to and collects the meter data
     meters = []
+    url, params = copier['url'], copier['params']
     s.get(url + '/login', params=params)
     s.get(url + '/sysmonitor', params=params)
     s.get(url + '/rps/jstatpri.cgi', params=params)
     counters = s.get(url + '/rps/dcounter.cgi', params=params)
-    soup = bs(counters.text, 'lxml')  # parsing from full page to just the meters
-    reads = re.findall('write_value\((\"[0-9]+\",[0-9]+)', soup)
+    reads = re.findall('write_value\((\"[0-9]+\",[0-9]+)', counters.text)
     for i in reads:
         i=i.replace('"', '').split(',')
         if i[0] in '109124105125108':
@@ -22,40 +18,31 @@ def parse_it(s, url, params): # navigates to and collects the meter data
     return meters
 
 def canon(copier):
-    s=requests.Session()
-    url = copier['url']
-    params = copier['params']
-    specific_meters = copier['specific_meters']
-    label = copier['label']
-
+    s, url, params=requests.Session(), copier['url'], copier['params']
 
     if copier == printer_dict['PHX-MFP-B']:
         meters = []
         s.get(url, params=params)
         s.get(url + '/rps/dstatus.cgi', params=params)  # have to go through all of these url for it to work
         counters = s.get(url + '/rps/dcounter.cgi', params=params)
-        soup = bs(counters.text, 'lxml')
-        reads = re.findall('write_value\((\"[0-9]+\",[0-9]+)', soup)
+        reads = re.findall('write_value\((\"[0-9]+\",[0-9]+)', counters.text)
         for i in reads:
             i=i.replace('"', '').split(',')
             if i[0] in '109124105125108':
                 meters.append(i)
     else:
-         meters = parse_it(s, url, params)
+         meters = parse_it(s, copier)
 
     with open('C:\\Users\\00015\\Desktop\\meter_readings.txt', 'a') as f:  # writing meters to file
-        f.write('\n' + label + '\n')
+        f.write('\n{}\n'.format(copier['label']))
         for i in meters:
-            if i[0] in specific_meters:
-                f.write(i[0] + ': ' + i[1] + '\n')
+            if i[0] in copier['specific_meters']:
+                f.write('{}: {}\n'.format(i[0], i[1]))
         f.close()
 
 def xerox(copier):
-    url = copier['url']
-    label = copier['label']
-    r = requests.get(url)  # get info and make soup
-    soup = bs(r.text, 'lxml')
-    meter_s = re.findall('billInfo = \[(.+)\]', soup)
+    r = requests.get(copier['url'])  # get info and make soup
+    meter_s = re.findall('billInfo = \[(.+)\]', r.text)
     meter_s = meter_s[0].split(',')
     results = []
     while len(meter_s) > 0:
@@ -67,10 +54,10 @@ def xerox(copier):
         results.append(temp[::-1])
 
     with open('C:\\Users\\00015\\Desktop\\meter_readings.txt', 'a') as file:  # writing data to file
-        file.write('\n' + label + '\n')
+        file.write('\n{}\n'.format(copier['label']))
         for item in results:
             if 'Total Impressions' not in item[0]:
-                file.write(item[0] + ': ' + item[1] + '\n')
+                file.write('{}: {}\n'.format(item[0], item[1]))
         file.close()
 
 
